@@ -4,7 +4,9 @@ const jwt = require('jsonwebtoken');
 const prisma = require('../prismaClient');
 
 const router = express.Router();
-const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+// Hardcode Client ID để tránh lỗi cấu hình biến môi trường trên Render
+const CLIENT_ID = '831813172331-kba74cu26krjd7f9kkheb0isreprkh9m.apps.googleusercontent.com';
+const client = new OAuth2Client(CLIENT_ID);
 
 router.post('/', async (req, res) => {
   const { credential } = req.body;
@@ -15,7 +17,7 @@ router.post('/', async (req, res) => {
   try {
     const ticket = await client.verifyIdToken({
       idToken: credential,
-      audience: process.env.GOOGLE_CLIENT_ID,
+      audience: CLIENT_ID,
     });
     
     const payload = ticket.getPayload();
@@ -56,8 +58,8 @@ router.post('/', async (req, res) => {
 
     res.json({ message: 'Login successful', token, user });
   } catch (error) {
-    console.error('Error verifying Google token:', error);
-    res.status(401).json({ error: 'Invalid Google token' });
+    console.error('Error in Google Auth:', error);
+    res.status(401).json({ error: 'Lỗi chi tiết: ' + error.message });
   }
 });
 
