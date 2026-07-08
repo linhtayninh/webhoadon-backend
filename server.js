@@ -24,7 +24,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/ads', adsRoutes);
 
 app.get('/', (req, res) => {
-  res.send('API Thuế Hộ Kinh Doanh is running');
+  res.send('API Sổ tay Cá nhân, Hộ kinh doanh is running');
 });
 
 app.listen(port, () => {
