@@ -10,7 +10,9 @@ datasource db {
 model User {
   id               Int           @id @default(autoincrement())
   email            String        @unique
-  password         String
+  password         String?
+  googleId         String?       @unique
+  avatarUrl        String?
   role             String        @default("USER") // 'USER' or 'ADMIN'
   taxCode          String?       // Mã số thuế
   businessName     String?       // Tên hộ kinh doanh
