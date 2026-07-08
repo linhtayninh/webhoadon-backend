@@ -1,0 +1,47 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id               Int           @id @default(autoincrement())
+  email            String        @unique
+  password         String
+  role             String        @default("USER") // 'USER' or 'ADMIN'
+  taxCode          String?       // Mã số thuế
+  businessName     String?       // Tên hộ kinh doanh
+  address          String?       // Địa chỉ
+  businessLocation String?       // Địa điểm kinh doanh
+  businessType     String?       // Ngành nghề
+  createdAt        DateTime      @default(now())
+  transactions     Transaction[]
+}
+
+model Advertisement {
+  id        Int      @id @default(autoincrement())
+  imageUrl  String
+  link      String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+}
+
+model Transaction {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  amount      Float    // Doanh thu
+  description String   // Diễn giải
+  date        DateTime @default(now()) // Ngày giao dịch
+  user        User     @relation(fields: [userId], references: [id])
+}
+
+model TaxConfig {
+  id               Int      @id @default(autoincrement())
+  businessType     String   @unique
+  vatRate          Float    // Tỷ lệ thuế GTGT (%)
+  pitRate          Float    // Tỷ lệ thuế TNCN (%)
+  description      String?
+}
