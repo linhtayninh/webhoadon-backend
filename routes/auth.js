@@ -33,7 +33,8 @@ router.post('/register', async (req, res) => {
         businessName,
         address,
         businessLocation,
-        businessType
+        businessType,
+        isProfileCompleted: true
       }
     });
     res.status(201).json({ message: 'Đăng ký thành công', userId: user.id });
@@ -48,8 +49,13 @@ router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
     const user = await prisma.user.findUnique({ where: { email } });
-    if (!user) return res.status(404).json({ error: 'Không tìm thấy người dùng' });
+    if (!user) return res.status(400).json({ error: 'Email không tồn tại' });
     
+    // Kiểm tra nếu tài khoản được đăng ký bằng Google (password là null)
+    if (!user.password) {
+      return res.status(400).json({ error: 'Tài khoản này được đăng ký bằng Google. Vui lòng sử dụng nút Đăng nhập bằng Google.' });
+    }
+
     const isValid = await bcrypt.compare(password, user.password);
     if (!isValid) return res.status(401).json({ error: 'Sai mật khẩu' });
     
@@ -74,22 +80,28 @@ router.get('/me', authenticate, async (req, res) => {
 // Cập nhật thông tin profile (cho Google Login lần đầu)
 router.post('/update-profile', async (req, res) => {
   try {
-    const { userId, taxCode, businessName, address, businessLocation, businessType } = req.body;
+    const { userId, taxCode, businessName, address, businessLocation, businessType, password } = req.body;
     
     if (!userId) {
       return res.status(400).json({ error: 'Thiếu userId' });
     }
 
+    const updateData = {
+      taxCode,
+      businessName,
+      address,
+      businessLocation,
+      businessType,
+      isProfileCompleted: true
+    };
+
+    if (password) {
+      updateData.password = await bcrypt.hash(password, 10);
+    }
+
     const user = await prisma.user.update({
       where: { id: parseInt(userId) },
-      data: {
-        taxCode,
-        businessName,
-        address,
-        businessLocation,
-        businessType,
-        isProfileCompleted: true
-      }
+      data: updateData
     });
 
     // Tạo JWT token sau khi cập nhật thành công

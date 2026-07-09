@@ -39,6 +39,9 @@ model Transaction {
   description String   // Diễn giải
   date        DateTime @default(now()) // Ngày giao dịch
   user        User     @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([date])
 }
 
 model TaxConfig {
