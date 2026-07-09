@@ -59,7 +59,7 @@ router.post('/login', async (req, res) => {
     const isValid = await bcrypt.compare(password, user.password);
     if (!isValid) return res.status(401).json({ error: 'Sai mật khẩu' });
     
-    const token = jwt.sign({ id: user.id, email: user.email }, process.env.JWT_SECRET, { expiresIn: '7d' });
+    const token = jwt.sign({ id: user.id, email: user.email }, process.env.JWT_SECRET, { expiresIn: '365d' });
     res.json({ message: 'Đăng nhập thành công', token, user: { id: user.id, email: user.email, name: user.businessName } });
   } catch (error) {
     console.error(error);
@@ -108,7 +108,7 @@ router.post('/update-profile', async (req, res) => {
     const token = jwt.sign(
       { id: user.id, email: user.email, role: user.role },
       process.env.JWT_SECRET || 'secretkey',
-      { expiresIn: '7d' }
+      { expiresIn: '365d' }
     );
 
     res.json({ message: 'Cập nhật thông tin thành công', token, user });
