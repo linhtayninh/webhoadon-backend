@@ -160,5 +160,38 @@ router.put('/settings', authenticate, async (req, res) => {
   }
 });
 
+// Quên mật khẩu (Xác thực bằng Email và Mã số thuế)
+router.post('/reset-password-mst', async (req, res) => {
+  try {
+    const { email, taxCode, newPassword } = req.body;
+    
+    if (!email || !taxCode || !newPassword) {
+      return res.status(400).json({ error: 'Vui lòng điền đầy đủ Email, Mã số thuế và Mật khẩu mới' });
+    }
+
+    // Tìm user theo email
+    const user = await prisma.user.findUnique({ where: { email } });
+    
+    // So sánh mã số thuế
+    if (!user || !user.taxCode || user.taxCode !== taxCode) {
+      return res.status(401).json({ error: 'Email hoặc Mã số thuế không chính xác!' });
+    }
+
+    // Mã hóa mật khẩu mới
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // Cập nhật vào DB
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { password: hashedPassword }
+    });
+
+    res.json({ message: 'Đặt lại mật khẩu thành công! Vui lòng đăng nhập lại.' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Lỗi server khi đặt lại mật khẩu' });
+  }
+});
+
 module.exports = router;
 module.exports.authenticate = authenticate;
