@@ -118,5 +118,47 @@ router.post('/update-profile', async (req, res) => {
   }
 });
 
+// Cập nhật cài đặt tài khoản (Đổi thông tin + Đổi mật khẩu)
+router.put('/settings', authenticate, async (req, res) => {
+  try {
+    const { taxCode, businessName, address, businessLocation, businessType, oldPassword, newPassword } = req.body;
+    const userId = req.user.id;
+
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) return res.status(404).json({ error: 'Không tìm thấy người dùng' });
+
+    const updateData = {
+      taxCode,
+      businessName,
+      address,
+      businessLocation,
+      businessType
+    };
+
+    // Nếu người dùng muốn đổi mật khẩu
+    if (newPassword) {
+      if (user.password) {
+        if (!oldPassword) {
+          return res.status(400).json({ error: 'Vui lòng nhập mật khẩu cũ để đổi mật khẩu mới' });
+        }
+        const isValid = await bcrypt.compare(oldPassword, user.password);
+        if (!isValid) return res.status(401).json({ error: 'Mật khẩu cũ không chính xác' });
+      }
+      // Nếu chưa có password (tạo mới) hoặc oldPassword đã đúng, thì mã hoá password mới
+      updateData.password = await bcrypt.hash(newPassword, 10);
+    }
+
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: updateData
+    });
+
+    res.json({ message: 'Cập nhật thành công', user: { ...updatedUser, password: undefined } });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Lỗi server khi cập nhật cài đặt' });
+  }
+});
+
 module.exports = router;
 module.exports.authenticate = authenticate;
