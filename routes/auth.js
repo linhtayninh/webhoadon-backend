@@ -71,5 +71,40 @@ router.get('/me', authenticate, async (req, res) => {
   }
 });
 
+// Cập nhật thông tin profile (cho Google Login lần đầu)
+router.post('/update-profile', async (req, res) => {
+  try {
+    const { userId, taxCode, businessName, address, businessLocation, businessType } = req.body;
+    
+    if (!userId) {
+      return res.status(400).json({ error: 'Thiếu userId' });
+    }
+
+    const user = await prisma.user.update({
+      where: { id: parseInt(userId) },
+      data: {
+        taxCode,
+        businessName,
+        address,
+        businessLocation,
+        businessType,
+        isProfileCompleted: true
+      }
+    });
+
+    // Tạo JWT token sau khi cập nhật thành công
+    const token = jwt.sign(
+      { id: user.id, email: user.email, role: user.role },
+      process.env.JWT_SECRET || 'secretkey',
+      { expiresIn: '7d' }
+    );
+
+    res.json({ message: 'Cập nhật thông tin thành công', token, user });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Lỗi server khi cập nhật thông tin' });
+  }
+});
+
 module.exports = router;
 module.exports.authenticate = authenticate;

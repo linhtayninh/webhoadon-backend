@@ -13,6 +13,7 @@ model User {
   password         String?
   googleId         String?       @unique
   avatarUrl        String?
+  isProfileCompleted Boolean   @default(false)
   role             String        @default("USER") // 'USER' or 'ADMIN'
   taxCode          String?       // Mã số thuế
   businessName     String?       // Tên hộ kinh doanh

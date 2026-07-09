@@ -29,16 +29,25 @@ router.post('/', async (req, res) => {
     });
 
     if (!user) {
-      // Create new user if not exists
+      // LẦN ĐẦU: Chưa có tài khoản -> Tạo mới với thông tin cơ bản
       user = await prisma.user.create({
         data: {
           email,
           googleId,
           avatarUrl,
           businessName: name, // Temporarily use their Google Name
+          isProfileCompleted: false
         },
       });
-    } else if (!user.googleId) {
+
+      return res.json({ 
+        status: 'profile_incomplete', 
+        userId: user.id,
+        message: 'Vui lòng cập nhật thêm thông tin để hoàn tất.' 
+      });
+    }
+
+    if (!user.googleId) {
       // Link Google account to existing email
       user = await prisma.user.update({
         where: { email },
@@ -49,14 +58,20 @@ router.post('/', async (req, res) => {
       });
     }
 
+    if (user && user.isProfileCompleted === false) {
+      // Đã đăng nhập nhưng chưa hoàn thành profile
+      return res.json({ status: 'profile_incomplete', userId: user.id });
+    }
+
+    // LẦN SAU: Đã có tài khoản + đã điền đủ thông tin -> Cho vào luôn
     // Generate JWT token
     const token = jwt.sign(
-      { userId: user.id, email: user.email, role: user.role },
+      { id: user.id, email: user.email, role: user.role },
       process.env.JWT_SECRET || 'secretkey',
-      { expiresIn: '24h' }
+      { expiresIn: '7d' }
     );
 
-    res.json({ message: 'Login successful', token, user });
+    res.json({ status: 'success', message: 'Login successful', token, user });
   } catch (error) {
     console.error('Error in Google Auth:', error);
     res.status(401).json({ error: 'Lỗi chi tiết: ' + error.message });
