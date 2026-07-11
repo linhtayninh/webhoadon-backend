@@ -92,6 +92,28 @@ router.put('/:id', authenticate, async (req, res) => {
   }
 });
 
+// Lấy danh sách các diễn giải (description) đã dùng để gợi ý
+router.get('/descriptions', authenticate, async (req, res) => {
+  try {
+    const transactions = await prisma.transaction.findMany({
+      where: { userId: req.user.id },
+      distinct: ['description'],
+      select: { description: true },
+      orderBy: { id: 'desc' } // Lấy những mô tả gần đây nhất
+    });
+    
+    // Lọc ra danh sách string
+    const descriptions = transactions
+      .map(tx => tx.description)
+      .filter(desc => desc && desc.trim().length > 0);
+      
+    res.json(descriptions);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Lỗi khi lấy gợi ý diễn giải' });
+  }
+});
+
 // Thống kê doanh thu cho Dashboard
 router.get('/dashboard', authenticate, async (req, res) => {
   try {
